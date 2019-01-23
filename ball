@@ -1,0 +1,155 @@
+package Circles;
+
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.geom.Ellipse2D;
+import java.util.ArrayList;
+
+import javax.swing.Timer;
+
+import javax.swing.JPanel;
+
+public class Ball extends JPanel implements ActionListener {
+	ArrayList<Points> point = new ArrayList<Points>();
+	Timer t = new Timer(1, this);
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2 = (Graphics2D) g;
+		for (int i = 0; i < point.size(); i++) {
+			Ellipse2D circle = new Ellipse2D.Double(point.get(i).getX(), point.get(i).getY(), point.get(i).radious * 2,
+					point.get(i).radious * 2);
+			g2.setColor(point.get(i).color);
+			g2.fill(circle);
+		}
+		t.start();
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Dimension d = this.getBounds().getSize();
+		int x = d.width;
+		int y = d.height;
+		repaint();
+		for (int i = 0; i < point.size(); i++) {
+			if (point.get(i).getX() <= 0 || point.get(i).getX() + point.get(i).radious * 2 >= x) {
+				if (point.get(i).getX() <= 0) {
+					point.get(i).setX(0);
+				} else {
+					point.get(i).setX(x - point.get(i).radious * 2);
+				}
+				point.get(i).setVx(point.get(i).vx * -1);
+				point.get(i).angle = Math.PI - point.get(i).angle;
+				if (point.get(i).angle < 0) {
+					point.get(i).angle *= -1;
+				}
+			}
+			if (point.get(i).getY() <= 0 || point.get(i).getY() + point.get(i).radious * 2 >= y) {
+				if (point.get(i).getY() <= 0) {
+					point.get(i).setY(0);
+				} else {
+					point.get(i).setY(y - point.get(i).radious * 2);
+				}
+				point.get(i).setVy(point.get(i).vy * -1);
+				point.get(i).angle = Math.PI - point.get(i).angle;
+				if (point.get(i).angle < 0) {
+					point.get(i).angle *= -1;
+				}
+			}
+			point.get(i).setX(point.get(i).getX() + point.get(i).vx);
+			point.get(i).setY(point.get(i).getY() + point.get(i).vy);
+
+//			for (int j = i+1; j < point.size(); j++) {
+//				checkPoints(i, j);
+//			}
+		}
+		for (int i = 0; i < point.size(); i++) {
+			a: for (int j = i + 1; j < point.size(); j++) {
+				boolean b = checkPoints(i, j);
+				if (b) {
+					break a;
+				}
+			}
+		}
+	}
+
+	private boolean checkPoints(int i, int j) {
+		double x1 = point.get(i).getX() + point.get(i).radious;
+		double y1 = point.get(i).getY() + point.get(i).radious;
+		double v1x = point.get(i).vx;
+		double v1y = point.get(i).vy;
+		double r1 = point.get(i).radious;
+		double x2 = point.get(j).getX() + point.get(i).radious;
+		double y2 = point.get(j).getY() + point.get(i).radious;
+		double v2x = point.get(j).vx;
+		double v2y = point.get(j).vy;
+		double r2 = point.get(j).radious;
+		if (r1 + r2 >= Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2))) {
+//			double a = Math.pow(v1x - v2x, 2) + Math.pow(v1y - v2y, 2);
+//			double b = -2 * ((x1 - x2) * (v1x - v2x) + (v1y - v2y) * (y1 - y2));
+//			double c = -Math.pow(r1 + r2, 2) + Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
+//			double t = (-b + Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
+//
+//			point.get(i).setX(x1 - v1x * t);
+//			point.get(j).setX(x2 - v2x * t);
+//			point.get(i).setY(y1 - v1y * t);
+//			point.get(j).setY(y2 - v2y * t);
+
+			collision(i, j);
+			return true;
+		}
+		return false;
+	}
+
+	private void collision(int i, int j) {// formol physic
+		double x1 = point.get(i).getX() + point.get(i).radious;
+		double y1 = point.get(i).getY() + point.get(i).radious;
+		double t1 = point.get(i).angle;
+		double vi1 = Math.sqrt(Math.pow(point.get(i).vx, 2) + Math.pow(point.get(i).vy, 2));
+		double m1 = point.get(i).mass;
+		double r1 = point.get(i).radious;
+
+		double x2 = point.get(j).getX() + point.get(i).radious;
+		double y2 = point.get(j).getY() + point.get(i).radious;
+		double t2 = point.get(j).angle;
+		double vi2 = Math.sqrt(Math.pow(point.get(j).vx, 2) + Math.pow(point.get(j).vy, 2));
+		double m2 = point.get(j).mass;
+		double r2 = point.get(j).radious;
+
+		double q;
+		if (x1 - x2 >= 0) {
+			q = Math.atan((y1 - y2) / (x1 - x2));
+		} else {
+			q = Math.atan(((y1 - y2) / (x1 - x2)) + Math.PI);
+		}
+		double vfx1 = ((vi1 * Math.cos(t1 - q) * (m1 - m2) + 2 * m2 * vi2 * Math.cos(t2 - q)) / (m1 + m2) * Math.cos(q)
+				+ vi1 * Math.sin(t1 - q) * Math.cos(q + Math.PI / 2));
+		double vfy1 = ((vi1 * Math.cos(t1 - q) * (m1 - m2) + 2 * m2 * vi2 * Math.cos(t2 - q)) / (m1 + m2) * Math.sin(q)
+				+ vi1 * Math.sin(t1 - q) * Math.sin(q + Math.PI / 2));
+		double vfx2 = ((vi2 * Math.cos(t2 - q) * (m2 - m1) + 2 * m1 * vi1 * Math.cos(t1 - q)) / (m1 + m2) * Math.cos(q)
+				+ vi2 * Math.sin(t2 - q) * Math.cos(q + Math.PI / 2));
+		double vfy2 = ((vi2 * Math.cos(t2 - q) * (m2 - m1) + 2 * m1 * vi1 * Math.cos(t1 - q)) / (m1 + m2) * Math.sin(q)
+				+ vi2 * Math.sin(t2 - q) * Math.sin(q + Math.PI / 2));
+
+		if (vfx1 >= 0) {
+			point.get(i).setAngle(Math.atan(vfy1 / vfx1));
+		} else {
+			point.get(i).setAngle(Math.atan((vfy1 / vfx1) + Math.PI));
+		}
+		point.get(i).setVx(vfx1);
+		point.get(i).setVy(vfy1);
+
+		if (vfx2 >= 0) {
+			point.get(i).setAngle(Math.atan(vfy2 / vfx2));
+		} else {
+			point.get(i).setAngle(Math.atan((vfy2 / vfx2) + Math.PI));
+		}
+		point.get(j).setVx(vfx2);
+		point.get(j).setVy(vfy2);
+	}
+
+}
